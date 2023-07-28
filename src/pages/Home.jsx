@@ -138,7 +138,8 @@ export const Home = () => {
                 <li
                   key={key}
                   tabIndex={0}
-                  aria-label={`Switch to list ${list.title}`}
+                  role="option"
+                  aria-selected={isActive}
                   className={`list-tab-item ${isActive ? 'active' : ''}`}
                   onClick={() => handleSelectList(list.id)}
                   onKeyDown={(e) => handleKeyDown(e, list.id, key)}
@@ -176,22 +177,50 @@ export const Home = () => {
 
 // 表示するタスク
 const Tasks = (props) => {
+  const formatDate = (dateString) => {
+    const date = new Date(dateString)
+    date.setHours(date.getHours() - 9)
+    const formatter = new Intl.DateTimeFormat('ja-JP', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      timeZone: 'Asia/Tokyo',
+    })
+
+    return formatter.format(date)
+  }
+
   const { tasks, selectListId, isDoneDisplay } = props
   if (tasks === null) return <></>
 
   const calculateRemainingDays = (deadline) => {
     // 現在の日時を取得
     const now = new Date()
+    // システムのタイムゾーンを日本時間に設定
+    const nowInTokyo = new Date(
+      now.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }),
+    )
     // 期限の日時を取得
     const limit = new Date(deadline)
+    // タスクの期限も日本時間に設定
+    const limitInTokyo = new Date(
+      limit.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }),
+    )
+    // 9時間（単位はミリ秒）を引く
+    limitInTokyo.setHours(limitInTokyo.getHours() - 9)
+
     // 期限までの残り時間（ミリ秒）を計算
-    const remainingTime = limit.getTime() - now.getTime()
-    // ミリ秒を日に換算（1日 = 24*60*60*1000 ミリ秒）
-    const remainingDays = Math.ceil(remainingTime / (24 * 60 * 60 * 1000))
-    // ミリ秒を時間に換算（1時間 = 60*60*1000 ミリ秒）
+    const remainingTime = limitInTokyo.getTime() - nowInTokyo.getTime()
+    // ミリ秒を日に換算（1日 = 24*60*60*1000 ミリ秒）端数は切り捨て
+    const remainingDays = Math.floor(remainingTime / (24 * 60 * 60 * 1000))
+    // ミリ秒を時間に換算（1時間 = 60*60*1000 ミリ秒）端数は切り捨て
     const remainingHours = Math.floor(
       (remainingTime % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000),
     )
+
     return { remainingDays, remainingHours }
   }
 
@@ -215,8 +244,9 @@ const Tasks = (props) => {
                     {task.done ? '完了' : '未完了'}
                   </span>
                   <br />
+                  {/* prettier-ignore */}
                   <span className="task-remaining">
-                    残り：{remainingTime.remainingDays}日{}
+                    残り：{remainingTime.remainingDays}日{ }
                     {remainingTime.remainingHours}時間
                   </span>
                 </Link>
@@ -246,10 +276,12 @@ const Tasks = (props) => {
                   {task.done ? '完了' : '未完了'}
                 </span>
                 <br />
-                <span className="task-deadline">期限：{task.limit}</span>
-
+                <span className="task-deadline">
+                  期限：{formatDate(task.limit)}
+                </span>
+                {/* prettier-ignore */}
                 <span className="task-remaining">
-                  残り：{remainingTime.remainingDays}日{}
+                  残り：{remainingTime.remainingDays}日{ }
                   {remainingTime.remainingHours}時間
                 </span>
                 <br />

@@ -24,17 +24,17 @@ export const EditTask = () => {
     if (!value) {
       setLimit(null) // Create a handler for limit change
     } else {
-      setLimit(value + ':00Z')
+      setLimit(value)
     }
   }
 
   const onUpdateTask = () => {
-    console.log(isDone)
+    const formattedLimit = limit ? `${limit}:00Z` : null // Add ':00Z' to limit before sending to server
     const data = {
       title: title,
       detail: detail,
       done: isDone,
-      limit: limit ? `${limit}:00Z` : null, // 3. Add limit to the data sent to server
+      limit: formattedLimit,
     }
 
     axios
@@ -44,7 +44,6 @@ export const EditTask = () => {
         },
       })
       .then((res) => {
-        console.log(res.data)
         navigate('/')
       })
       .catch((err) => {
@@ -80,7 +79,12 @@ export const EditTask = () => {
         setDetail(task.detail)
         setIsDone(task.done)
         if (task.limit) {
-          setLimit(task.limit.slice(0, -1)) // Slice off the last 1 characters from task.limit if it is not null
+          const formattedLimit = task.limit.substring(0, task.limit.length - 1)
+          const formattedLimitWithoutSeconds = formattedLimit.substring(
+            0,
+            formattedLimit.length - 3,
+          )
+          setLimit(formattedLimitWithoutSeconds)
         } else {
           setLimit(null)
         }
